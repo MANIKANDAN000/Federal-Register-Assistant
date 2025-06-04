@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+aiohttp
+aiomysql
+python-dotenv
+openai  # For Ollama client
+httpx # openai client dependency, sometimes good to specify

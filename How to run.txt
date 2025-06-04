@@ -1,0 +1,15 @@
+Install Xampp (start Mysql , Apache)
+Install ollama and start server 
+
+1. python -m venv venv
+2. venv\Scripts\activate
+3. pip install -r requirements.txt
+4. python -m data_pipeline.db_setup
+5. python -m data_pipeline.run_pipeline
+6. pip install aiofiles
+7. python -m data_pipeline.run_pipeline
+8. pip install streamlit
+9. set PYTHONPATH=.
+10. uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+
+Finally copy paste the url on chrome  :   http://localhost:8000

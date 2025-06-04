@@ -1,0 +1,95 @@
+
+## Setup Instructions
+
+1.  **Prerequisites:**
+    *   Python 3.8+
+    *   MySQL Server
+    *   Ollama installed and running.
+
+2.  **Clone the Repository:**
+    ```bash
+    git clone <repository_url>
+    cd federal_rag_agent
+    ```
+
+3.  **Set up Python Environment:**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    pip install -r requirements.txt
+    ```
+
+4.  **Configure Environment Variables:**
+    Copy `.env_example` to `.env` and update the values:
+    ```bash
+    cp .env_example .env
+    # Open .env and fill in your MySQL details, Ollama URL, etc.
+    # Example .env content:
+    # MYSQL_HOST=localhost
+    # MYSQL_PORT=3306
+    # MYSQL_USER=your_user
+    # MYSQL_PASSWORD=your_password
+    # MYSQL_DB=federal_registry_db
+    # OLLAMA_BASE_URL=http://localhost:11434/v1
+    # OLLAMA_MODEL=qwen2:0.5b
+    # RAW_DATA_RETENTION_DAYS=7
+    ```
+    *Ensure the `MYSQL_DB` database exists in your MySQL server, or create it.*
+
+5.  **Set up Ollama Model:**
+    Pull the desired model if you haven't already (e.g., `qwen2:0.5b`).
+    ```bash
+    ollama pull qwen2:0.5b 
+    # or qwen2:1b, llama3:8b-instruct-q5_K_M, etc.
+    # Ensure Ollama server is running (ollama serve)
+    ```
+    Note: Tool calling reliability varies by model. `qwen2` models (0.5B, 1.5B, 7B) generally have good support. `llama3` instruct versions also work.
+
+6.  **Run the Data Pipeline:**
+    This will set up the database table and fetch initial data.
+    ```bash
+    # Ensure your virtual environment is active
+    # Run from the root directory `federal_rag_agent`
+    python -m data_pipeline.db_setup  # Optional: run separately first
+    python -m data_pipeline.run_pipeline
+    ```
+    The pipeline fetches data for "yesterday" by default. You can modify `run_pipeline.py` or `downloader.py` to fetch a larger historical range for initial setup if needed.
+
+7.  **Run the FastAPI Application:**
+    ```bash
+    # Ensure your virtual environment is active
+    # Run from the root directory `federal_rag_agent`
+    # The PYTHONPATH ensures modules are found correctly
+    PYTHONPATH=. uvicorn api.main:app --reload --host 0.0.0.0 --port 8000
+    ```
+
+8.  **Access the Chat UI:**
+    Open your browser and go to `http://localhost:8000`.
+
+## How to Use
+
+1.  Once the FastAPI server is running and the UI is open, you can start asking questions.
+2.  The agent will use its tools to query the Federal Register data stored in MySQL if your query relates to it.
+
+**Example Queries:**
+*   "What are the latest notices from the EPA?"
+*   "Find presidential documents related to 'national emergency' published this month."
+*   "Are there any new rules about cybersecurity?"
+*   "Summarize proposed rules from the Department of Transportation from last week."
+
+## Development Notes
+
+*   **Data Pipeline:** The pipeline is designed to be run daily. For the demo, you can run `python -m data_pipeline.run_pipeline` manually to update the DB. No cronjob/scheduler is set up.
+*   **Tool Calling:** The LLM decides when to use the `search_federal_documents_in_db` tool. The quality of tool usage depends on the LLM model and the prompt.
+*   **Async:** Most I/O operations (API calls, DB queries, LLM interactions) are asynchronous.
+*   **Error Handling:** Basic error handling is in place. Production systems would require more robust logging and error management.
+*   **Chat History:** Chat history is stored in-memory per session for the demo and is lost on server restart.
+
+## Future Improvements (Out of Scope for this Task)
+
+*   Persistent chat history (e.g., SQLite, Redis, or a full DB).
+*   More sophisticated tool design and LLM control.
+*   Vector database integration for semantic search.
+*   Enhanced UI/UX.
+*   Production-grade deployment, logging, and monitoring.
+*   Authentication and authorization.
